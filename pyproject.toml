@@ -1,0 +1,22 @@
+[project]
+name = "microshop"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Sur619",email = "whatyoulookingfor619@gmail.com"}
+]
+license = {text = "MIT"}
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard] (>=0.115.12,<0.116.0)",
+    "pytest (>=8.4.0,<9.0.0)",
+    "uvicorn[standard] (>=0.34.3,<0.35.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+package-mode = false
