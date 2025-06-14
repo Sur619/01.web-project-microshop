@@ -12,7 +12,8 @@ dependencies = [
     "pytest (>=8.4.0,<9.0.0)",
     "uvicorn[standard] (>=0.34.3,<0.35.0)",
     "black (>=25.1.0,<26.0.0)",
-    "sqlalchemy[asyncio] (>=2.0.41,<3.0.0)"
+    "sqlalchemy[asyncio] (>=2.0.41,<3.0.0)",
+    "aiosqlite (>=0.21.0,<0.22.0)"
 ]
 
 
