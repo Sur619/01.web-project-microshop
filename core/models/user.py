@@ -4,8 +4,11 @@ from core.models import Base
 from core.models.post import Post
 from typing import TYPE_CHECKING
 
+from core.models.profile import Profile
+
 if TYPE_CHECKING:
-    from core.models.post import Post  # Avoid circular import issues
+    from core.models.post import Post
+    from core.models.profile import Profile
 
 
 class User(Base):
@@ -14,3 +17,4 @@ class User(Base):
     posts: Mapped[list["Post"]] = relationship(
         back_population="user",
     )
+    profile: Mapped["Profile"] = relationship(back_populates="user")
