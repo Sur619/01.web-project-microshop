@@ -103,26 +103,29 @@ async def get_profile_with_users_and_users_with_posts(
         print("Posts by user:", profile.user.posts)
 
 
+async def main_relations(session: AsyncSession):
+    await create_user(session=session, username="john")
+    await create_user(session=session, username="ivan")
+    user_john = await get_user_by_username(session=session, username="john")
+    user_ivan = await get_user_by_username(session=session, username="ivan")
+
+    await create_user_profile(
+        session=session, user_id=user_ivan.id, first_name="ivan", last_name="bobby"
+    )
+    await create_user_profile(
+        session=session, user_id=user_john.id, first_name="John", last_name="bobby"
+    )
+    await show_users_with_profiles(session=session)
+    await create_posts(session, user_john.id, "Math", "Physics", "Chemistry")
+    await get_users_posts(session=session)
+    await get_posts_with_authors(session=session)
+    await get_users_with_posts_and_profiles(session=session)
+    await get_profile_with_users_and_users_with_posts(session=session)
+
+
 async def main():
     async with db_helper.session_factory() as session:
-        # await create_user(session=session, username="john")
-        # await create_user(session=session, username="ivan")
-        user_john = await get_user_by_username(session=session, username="john")
-        user_ivan = await get_user_by_username(session=session, username="ivan")
-        #
-        # await create_user_profile(
-        #     session=session, user_id=user_ivan.id, first_name="ivan", last_name="bobby"
-        # )
-        # await create_user_profile(
-        #     session=session, user_id=user_john.id, first_name="John", last_name="bobby"
-        # )
-        # await show_users_with_profiles(session=session)
-        # await create_posts
-        # await create_posts(session, user_john.id, "Math", "Physics", "Chemistry")
-        # await get_users_posts(session=session)
-        # await get_posts_with_authors(session=session)
-        # await get_users_with_posts_and_profiles(session=session)
-        await get_profile_with_users_and_users_with_posts(session=session)
+        await main_relations(session=session)
 
 
 if __name__ == "__main__":
