@@ -7,6 +7,7 @@ __all__ = (
     "Post",
     "Profile",
     "UserRelationMixin",
+    "Order",
 )
 
 from .base import Base
@@ -16,3 +17,4 @@ from .user import User
 from .post import Post
 from .profile import Profile
 from .mixin import UserRelationMixin
+from .order import Order
