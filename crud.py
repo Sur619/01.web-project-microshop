@@ -5,7 +5,15 @@ from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 import asyncio
 from sqlalchemy.orm import joinedload, selectinload
-from core.models import db_helper, User, Profile, Post, Order, Product
+from core.models import (
+    db_helper,
+    User,
+    Profile,
+    Post,
+    Order,
+    Product,
+    OrderProductAssociation,
+)
 
 
 async def create_user(session: AsyncSession, username: str) -> User:
@@ -184,11 +192,13 @@ async def create_orders_and_products(session: AsyncSession):
     await session.commit()
 
 
-async def get_orders_with_products(session: AsyncSession) -> List[Order]:
+async def get_orders_with_products_assoc(session: AsyncSession) -> List[Order]:
     stmt = (
         select(Order)
         .options(
-            selectinload(Order.products),
+            selectinload(Order.products_details).joinedload(
+                OrderProductAssociation.product
+            ),
         )
         .order_by(Order.id)
     )
@@ -196,12 +206,40 @@ async def get_orders_with_products(session: AsyncSession) -> List[Order]:
     return list(orders)
 
 
-async def demo_m2m(session: AsyncSession):
+async def demo_get_orders_with_products_through_secondary(session: AsyncSession):
     orders = await get_orders_with_products(session=session)
     for order in orders:
         print(f"Order ID: {order.id}, Promocode: {order.promocode}")
         for product in order.products:
             print(f"  Product: {product.name}, Price: {product.price}")
+
+
+async def demo_get_orders_with_products_with_assoc(session: AsyncSession):
+    orders = await get_orders_with_products_assoc(session=session)
+    for order in orders:
+        print(
+            "id:",
+            order.id,
+            "promo:",
+            order.promocode,
+            "created:",
+            order.created_at,
+            "products:",
+        )
+        for order_product_details in order.products_details:
+            print(
+                "-",
+                order_product_details.id,
+                order_product_details.product.name,
+                order_product_details.product.price,
+                "qty:",
+                order_product_details.count,
+            )
+
+
+async def demo_m2m(session: AsyncSession):
+    # await demo_get_orders_with_products_through_secondary(session: AsyncSession)
+    await demo_get_orders_with_products_with_assoc(session=session)
 
 
 async def main():
