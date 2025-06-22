@@ -1,7 +1,5 @@
 from typing import List
-
 from sqlalchemy import select
-from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 import asyncio
 from sqlalchemy.orm import joinedload, selectinload
@@ -126,7 +124,7 @@ async def create_product(
     name: str,
     description: str,
     price: int,
-) -> Product:
+):
     product = Product(
         name=name,
         description=description,
@@ -207,11 +205,30 @@ async def get_orders_with_products_assoc(session: AsyncSession) -> List[Order]:
 
 
 async def demo_get_orders_with_products_through_secondary(session: AsyncSession):
-    orders = await get_orders_with_products(session=session)
+    # orders = await get_orders_with_products(session=session)
+    # for order in orders:
+    #     print(f"Order ID: {order.id}, Promocode: {order.promocode}")
+    #     for product in order.products:
+    #         print(f"  Product: {product.name}, Price: {product.price}")
+    #
+    ...
+
+
+async def create_gift_product_for_existing_orders(session: AsyncSession):
+    orders = await get_orders_with_products_assoc(session)
+    gift_product = await create_product(
+        session=session, name="Gift", description="Gift Product", price=0
+    )
     for order in orders:
-        print(f"Order ID: {order.id}, Promocode: {order.promocode}")
-        for product in order.products:
-            print(f"  Product: {product.name}, Price: {product.price}")
+        order.products_details.append(
+            OrderProductAssociation(
+                product=gift_product,
+                count=1,
+                unit_price=0,
+            )
+        )
+
+    await session.commit()
 
 
 async def demo_get_orders_with_products_with_assoc(session: AsyncSession):
@@ -238,7 +255,8 @@ async def demo_get_orders_with_products_with_assoc(session: AsyncSession):
 
 
 async def demo_m2m(session: AsyncSession):
-    # await demo_get_orders_with_products_through_secondary(session: AsyncSession)
+    # await demo_get_orders_with_products_through_secondary(session=session)
+    # await create_gift_product_for_existing_orders(session=session)
     await demo_get_orders_with_products_with_assoc(session=session)
 
 
