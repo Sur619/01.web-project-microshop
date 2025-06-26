@@ -11,6 +11,12 @@ class DBSettings(BaseModel):
     echo: bool = False
 
 
+class AuthJWT(BaseModel):
+    private_key_path: str = BASE_DIR / "certs" / "private_key.pem"
+    public_key_path: str = BASE_DIR / "certs" / "public_key.pem"
+    algorithm: str = "RS256"
+
+
 class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
 
