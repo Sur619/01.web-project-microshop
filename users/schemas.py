@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Annotated
 
 from annotated_types import MinLen, MaxLen
@@ -17,3 +18,8 @@ class UserSchema(BaseModel):
     password: bytes
     email: EmailStr | None = None
     active: bool = True
+
+
+class RoleEnum(str, Enum):
+    user = "user"
+    admin = "admin"
