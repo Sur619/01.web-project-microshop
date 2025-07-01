@@ -1,5 +1,6 @@
 from jwt.exceptions import InvalidTokenError
-from users.schemas import UserSchema
+
+from users.schemas import UserSchema, RoleEnum
 from auth.auth import utils as auth_utils
 from fastapi import (
     APIRouter,
@@ -10,12 +11,9 @@ from fastapi import (
 )
 from pydantic import BaseModel
 from fastapi.security import (
-    HTTPBearer,
-    HTTPAuthorizationCredentials,
     OAuth2PasswordBearer,
 )
 
-# http_bearer = HTTPBearer()
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/api/v1/demo-auth/jwt/login/",
 )
@@ -44,6 +42,21 @@ users_db: dict[str, UserSchema] = {
 }
 
 
+def get_current_token_payload(
+    token: str = Depends(oauth2_scheme),
+) -> dict:
+    try:
+        payload = auth_utils.decode_jwt(
+            token=token,
+        )
+    except InvalidTokenError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Token invalid: {e}",
+        )
+    return payload
+
+
 def validate_auth_user(
     username: str = Form(),
     password: str = Form(),
@@ -67,6 +80,46 @@ def validate_auth_user(
     return user
 
 
+def get_current_auth_user(
+    payload: dict = Depends(get_current_token_payload),
+) -> UserSchema:
+    username: str | None = payload.get("sub")
+    if user := users_db.get(username):
+        return user
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token invalid (user not found)",
+        )
+
+
+def get_current_admin_user(
+    user: UserSchema = Depends(get_current_auth_user),
+) -> UserSchema:
+    if not user.active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User is not active",
+        )
+    if user.role != RoleEnum.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return user
+
+
+def get_current_active_user(
+    user: UserSchema = Depends(get_current_auth_user),
+):
+    if user.active:
+        return user
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="User is not active",
+    )
+
+
 @router.post("/login/", response_model=TokenInfo)
 def auth_user_issue_jwt(
     user: UserSchema = Depends(validate_auth_user),
@@ -85,53 +138,10 @@ def auth_user_issue_jwt(
     )
 
 
-def get_current_token_payload(
-    # credentials: HTTPAuthorizationCredentials = Depends(oauth2_scheme),
-    token: str = Depends(oauth2_scheme),
-) -> UserSchema:
-    # token = credentials.credentials
-    try:
-        payload = auth_utils.decode_jwt(
-            token=token,
-        )
-    except InvalidTokenError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Token invalid: {e}",
-        )
-    return payload
-
-
-def get_current_auth_user(
-    payload: dict = Depends(get_current_token_payload),
-) -> UserSchema:
-    username: str | None = payload.get("sub")
-    if user := users_db.get(username):
-        return user
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token invalid (user not found)",
-        )
-
-
-def get_current_active_user(
-    user: UserSchema = Depends(get_current_auth_user),
-):
-    if user.active:
-        return user
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="User is not active",
-    )
-
-
 @router.get("/users/me/")
 def auth_user_check_self_info(
     payload: dict = Depends(get_current_token_payload),
-    user: UserSchema = Depends(
-        get_current_active_user,
-    ),
+    user: UserSchema = Depends(get_current_admin_user),
 ):
     iat = payload.get("iat")
     return {
